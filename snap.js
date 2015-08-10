@@ -12,7 +12,7 @@ function SnapInterval(pixelSize, offset, count) {
   this.count      = count
 }
 
-function partitionLines(points, ids, start, end, lox, loy, hix, hiy) {
+function partition(points, ids, start, end, lox, loy, hix, hiy) {
   var mid = start
   for(var i=start; i<end; ++i) {
     var x  = points[2*i]
@@ -76,7 +76,7 @@ function snapPoints(points, output, outputId, bounds) {
   var ptr = n-1
   var qptr = 0
 
-  var scales = [ new PointInterval(diam, n-1) ]
+  var scales = [ new SnapInterval(diam, n-1, 1) ]
   var lastScale = diam
 
   while(qptr < toVisit.length) {
@@ -89,18 +89,18 @@ function snapPoints(points, output, outputId, bounds) {
     output[2*ptr]   = (points[2*start]   - lox) * scaleX
     output[2*ptr+1] = (points[2*start+1] - loy) * scaleY
     outputId[ptr]   = ids[start]
-    ptr   -= 1
-    start += 1
     if(d < lastScale) {
       scales.push(new SnapInterval(d, ptr, n-ptr))
     }
+    ptr   -= 1
+    start += 1
     lastScale = d
     var s = d / SUBDIV
     for(var i=0; i<=SUBDIV; ++i) {
       for(var j=0; j<=SUBDIV; ++j) {
         var x0 = x + s * i
         var y0 = y + s * j
-        var mid = partitionPoints(
+        var mid = partition(
           points,
           ids,
           start,
