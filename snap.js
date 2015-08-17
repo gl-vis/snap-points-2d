@@ -49,6 +49,8 @@ function snapPoints(points, output, outputId, bounds) {
   if(n < 1) {
     return []
   }
+
+  //Compute bounds, initialize temporary id array
   var ids = pool.mallocInt32(n)
   var lox =  Infinity, loy =  Infinity
   var hix = -Infinity, hiy = -Infinity
@@ -61,6 +63,8 @@ function snapPoints(points, output, outputId, bounds) {
     hiy = Math.max(hiy, y)
     ids[i] = i
   }
+
+  //Calculate diameter
   var scaleX = 1.0 / (hix - lox)
   var scaleY = 1.0 / (hiy - loy)
   var diam = Math.max(hix - lox, hiy - loy)
