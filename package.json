@@ -27,5 +27,8 @@
   "homepage": "https://github.com/mikolalysenko/snap-points-2d#readme",
   "dependencies": {
     "typedarray-pool": "^1.1.0"
+  },
+  "devDependencies": {
+    "gauss-random": "^1.0.1"
   }
 }
