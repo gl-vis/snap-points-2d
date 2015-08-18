@@ -1,5 +1,5 @@
 var gaussRandom = require('gauss-random')
-var snapPoints = require('../snap')
+var snapPoints = require('../snap-dfs')
 
 var NUM_POINTS = (process.argv[2])|0
 
@@ -14,7 +14,6 @@ for(var i=0; i<2*NUM_POINTS; ++i) {
 }
 
 var timeStart = Date.now()
-var levels = snapPoints(points, levelQT, ids)
+var levels = snapPoints(points, ids)
 console.log(Date.now() - timeStart)
-
 console.log(levels)

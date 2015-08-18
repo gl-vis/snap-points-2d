@@ -10,7 +10,7 @@ var levelQT = new Float32Array(2*NUM_POINTS)
 var ids     = new Int32Array(NUM_POINTS)
 
 for(var i=0; i<2*NUM_POINTS; ++i) {
-  points[i] = gaussRandom()
+  points[i] = 0
 }
 
 var timeStart = Date.now()
