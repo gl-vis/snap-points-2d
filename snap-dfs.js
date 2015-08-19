@@ -3,7 +3,6 @@
 var pool = require('typedarray-pool')
 
 var sortLevels = require('./lib/sort')
-var findCut    = require('./lib/median')
 
 module.exports = snapPoints
 
@@ -70,38 +69,6 @@ function snapPoints(points, ids, bounds) {
   var levels = pool.mallocInt32(n)
   var ptr = 0
 
-  //TODO: Cut out block of points
-  function cutBlock(points, ids, start, end, diam, level) {
-    var cutPoint = findCut(points, ids, start, end)
-    var cutRadius = Math.max(Math.abs(points[2*start]   - points[2*cutPoint]),
-                             Math.abs(points[2*start+1] - points[2*cutPoint+1]))
-    if(cutRadius === 0) {
-      for(var i=start; i<cutPoint; ++i) {
-        levels[i] = level++
-      }
-      return cutPoint
-    }
-    var cutScale = diam
-    var ptr = start
-    while(0.5*cutScale >= cutRadius && ptr < cutPoint) {
-      levels[ptr++] = level++
-      cutScale *= 0.5
-    }
-    if(ptr < cutPoint) {
-      var lowX = Infinity
-      var lowY = -Infinity
-      levels[ptr++] = level++
-      for(var i=ptr; i<cutPoint; ++i) {
-        lowX = Math.min(lowX, points[2*i])
-        lowY = Math.min(lowY, points[2*i+1])
-      }
-      if(ptr < cutPoint) {
-        snapRec(lowX, lowY, cutScale, ptr, cutPoint, level)
-      }
-    }
-    return cutPoint
-  }
-
   function snapRec(x, y, diam, start, end, level) {
     var diam_2 = diam * 0.5
     var offset = start + 1
@@ -112,14 +79,13 @@ function snapPoints(points, ids, bounds) {
         var nx = x+i*diam_2
         var ny = y+j*diam_2
         var nextOffset = partition(points, ids, offset, end, nx, ny, nx+diam_2, ny+diam_2)
-        if(nextOffset - offset >= Math.max(0.9 * count, 32)) {
-
-          //Use linear time partition algorithm
-          console.log("BAD CASE", count)
-          offset = cutBlock(points, ids, offset, nextOffset, diam_2, level+1))
-        }
         if(nextOffset === offset) {
           continue
+        }
+        if(nextOffset - offset >= Math.max(0.9 * count, 32)) {
+          var mid = (end + start)>>>1
+          snapRec(nx, ny, diam_2, offset, mid, level+1)
+          offset = mid
         }
         snapRec(nx, ny, diam_2, offset, nextOffset, level+1)
         offset = nextOffset
