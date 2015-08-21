@@ -97,6 +97,7 @@ function snapPoints(points, ids, bounds) {
 
   var lod = []
   var lastLevel = 0
+  var prevOffset = n-1
   for(var ptr=n-1; ptr>=0; --ptr) {
     points[2*ptr]   = (points[2*ptr]   - lox) * scaleX
     points[2*ptr+1] = (points[2*ptr+1] - loy) * scaleY
@@ -109,12 +110,15 @@ function snapPoints(points, ids, bounds) {
     lod.push(new SnapInterval(
       diam * Math.pow(0.5, level),
       ptr + 1,
-      n - ptr - 1
+      prevOffset - ptr
     ))
+    prevOffset = ptr
 
     lastLevel = level
   }
-  lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, n))
+  if(prevOffset) {
+    lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
+  }
   pool.free(levels)
 
   return lod
