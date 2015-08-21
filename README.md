@@ -10,12 +10,11 @@ npm i snap-points-2d
 
 # API
 
-#### `var hlod = require('snap-points-2d')(points, output, outputIds[, bounds])`
+#### `var hlod = require('snap-points-2d')(points, ids, [, bounds])`
 Reorders the points hierarchically such that those which are drawn at the same pixel coordinate are grouped together.
 
 * `points` is an array of 2*n values
-* `output` is the reordered array of points
-* `outputIds` is the index of the reordered points in the input array
+* `ids` is an array which gets the reordered index of the points
 * `bounds` is an optional array of 4 values giving the bounding box of the points
 
 **Returns** An array of LOD scales.  Each record is an object with the following properties:
