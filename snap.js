@@ -1,16 +1,10 @@
 'use strict'
 
-module.exports = snapPoints
-
 var pool = require('typedarray-pool')
 
-var SUBDIV = 2
+var sortLevels = require('./lib/sort')
 
-function SnapInterval(pixelSize, offset, count) {
-  this.pixelSize  = pixelSize
-  this.offset     = offset
-  this.count      = count
-}
+module.exports = snapPoints
 
 function partition(points, ids, start, end, lox, loy, hix, hiy) {
   var mid = start
@@ -36,22 +30,18 @@ function partition(points, ids, start, end, lox, loy, hix, hiy) {
   return mid
 }
 
-function VisitRecord(x, y, diam, start, end) {
-  this.x = x
-  this.y = y
-  this.diam = diam
-  this.start = start
-  this.end = end
+function SnapInterval(pixelSize, offset, count) {
+  this.pixelSize  = pixelSize
+  this.offset     = offset
+  this.count      = count
 }
 
-function snapPoints(points, output, outputId, bounds) {
+function snapPoints(points, ids, bounds) {
   var n    = points.length >>> 1
   if(n < 1) {
     return []
   }
 
-  //Compute bounds, initialize temporary id array
-  var ids = pool.mallocInt32(n)
   var lox =  Infinity, loy =  Infinity
   var hix = -Infinity, hiy = -Infinity
   for(var i=0; i<n; ++i) {
@@ -76,50 +66,60 @@ function snapPoints(points, output, outputId, bounds) {
   bounds[2] = hix
   bounds[3] = hiy
 
-  var toVisit = [ new VisitRecord(lox, loy, diam, 0, n) ]
-  var ptr = n-1
-  var qptr = 0
+  var levels = pool.mallocInt32(n)
+  var ptr = 0
 
-  var scales = [ new SnapInterval(diam, n-1, 1) ]
-  var lastScale = diam
-
-  while(qptr < toVisit.length) {
-    var head = toVisit[qptr++]
-    var x = head.x
-    var y = head.y
-    var d = head.diam
-    var start = head.start
-    var end = head.end
-    output[2*ptr]   = (points[2*start]   - lox) * scaleX
-    output[2*ptr+1] = (points[2*start+1] - loy) * scaleY
-    outputId[ptr]   = ids[start]
-    if(d < lastScale) {
-      scales.push(new SnapInterval(d, ptr, n-ptr))
-    }
-    ptr   -= 1
-    start += 1
-    lastScale = d
-    var s = d / SUBDIV
-    for(var i=0; i<=SUBDIV; ++i) {
-      for(var j=0; j<=SUBDIV; ++j) {
-        var x0 = x + s * i
-        var y0 = y + s * j
-        var mid = partition(
-          points,
-          ids,
-          start,
-          end,
-          x0, y0,
-          x + s*(i+1), y + s*(j+1))
-        if(start < mid) {
-          toVisit.push(new VisitRecord(x0, y0, s, start, mid))
-          start = mid
+  function snapRec(x, y, diam, start, end, level) {
+    var diam_2 = diam * 0.5
+    var offset = start + 1
+    var count = end - start
+    levels[ptr++] = level
+    for(var i=0; i<2; ++i) {
+      for(var j=0; j<2; ++j) {
+        var nx = x+i*diam_2
+        var ny = y+j*diam_2
+        var nextOffset = partition(points, ids, offset, end, nx, ny, nx+diam_2, ny+diam_2)
+        if(nextOffset === offset) {
+          continue
         }
+        if(nextOffset - offset >= Math.max(0.9 * count, 32)) {
+          var mid = (end + start)>>>1
+          snapRec(nx, ny, diam_2, offset, mid, level+1)
+          offset = mid
+        }
+        snapRec(nx, ny, diam_2, offset, nextOffset, level+1)
+        offset = nextOffset
       }
     }
   }
-  pool.free(ids)
-  scales.push(new SnapInterval(lastScale, 0, n))
+  snapRec(lox, loy, diam, 0, n, 0)
+  sortLevels(levels, points, ids, n)
 
-  return scales
+  var lod = []
+  var lastLevel = 0
+  var prevOffset = n-1
+  for(var ptr=n-1; ptr>=0; --ptr) {
+    points[2*ptr]   = (points[2*ptr]   - lox) * scaleX
+    points[2*ptr+1] = (points[2*ptr+1] - loy) * scaleY
+
+    var level = levels[ptr]
+    if(level === lastLevel) {
+      continue
+    }
+
+    lod.push(new SnapInterval(
+      diam * Math.pow(0.5, level),
+      ptr + 1,
+      prevOffset - ptr
+    ))
+    prevOffset = ptr
+
+    lastLevel = level
+  }
+  if(prevOffset) {
+    lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
+  }
+  pool.free(levels)
+
+  return lod
 }
