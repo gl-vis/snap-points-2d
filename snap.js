@@ -36,7 +36,7 @@ function SnapInterval(pixelSize, offset, count) {
   this.count      = count
 }
 
-function snapPoints(points, ids, bounds) {
+function snapPoints(points, ids, weights, bounds) {
   var n    = points.length >>> 1
   if(n < 1) {
     return []
@@ -74,6 +74,7 @@ function snapPoints(points, ids, bounds) {
     var offset = start + 1
     var count = end - start
     levels[ptr++] = level
+    weights[ptr++] = count
     for(var i=0; i<2; ++i) {
       for(var j=0; j<2; ++j) {
         var nx = x+i*diam_2
@@ -93,7 +94,7 @@ function snapPoints(points, ids, bounds) {
     }
   }
   snapRec(lox, loy, diam, 0, n, 0)
-  sortLevels(levels, points, ids, n)
+  sortLevels(levels, points, ids, weights, n)
 
   var lod = []
   var lastLevel = 0
