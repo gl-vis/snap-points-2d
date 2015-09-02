@@ -73,8 +73,8 @@ function snapPoints(points, ids, weights, bounds) {
     var diam_2 = diam * 0.5
     var offset = start + 1
     var count = end - start
+    weights[ptr] = count
     levels[ptr++] = level
-    weights[ptr++] = count
     for(var i=0; i<2; ++i) {
       for(var j=0; j<2; ++j) {
         var nx = x+i*diam_2
