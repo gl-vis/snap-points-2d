@@ -29,6 +29,8 @@
     "typedarray-pool": "^1.1.0"
   },
   "devDependencies": {
-    "gauss-random": "^1.0.1"
+    "almost-equal": "^1.0.0",
+    "gauss-random": "^1.0.1",
+    "tape": "^4.2.0"
   }
 }

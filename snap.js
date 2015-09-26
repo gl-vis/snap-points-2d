@@ -54,6 +54,13 @@ function snapPoints(points, ids, weights, bounds) {
     ids[i] = i
   }
 
+  if(lox === hix) {
+    hix += 1 + Math.abs(hix)
+  }
+  if(loy === hiy) {
+    hiy += 1 + Math.abs(hix)
+  }
+
   //Calculate diameter
   var scaleX = 1.0 / (hix - lox)
   var scaleY = 1.0 / (hiy - loy)
@@ -79,7 +86,13 @@ function snapPoints(points, ids, weights, bounds) {
       for(var j=0; j<2; ++j) {
         var nx = x+i*diam_2
         var ny = y+j*diam_2
-        var nextOffset = partition(points, ids, offset, end, nx, ny, nx+diam_2, ny+diam_2)
+        var nextOffset = partition(
+            points
+          , ids
+          , offset
+          , end
+          , nx, ny
+          , nx+diam_2, ny+diam_2)
         if(nextOffset === offset) {
           continue
         }
@@ -96,9 +109,9 @@ function snapPoints(points, ids, weights, bounds) {
   snapRec(lox, loy, diam, 0, n, 0)
   sortLevels(levels, points, ids, weights, n)
 
-  var lod = []
-  var lastLevel = 0
-  var prevOffset = n-1
+  var lod         = []
+  var lastLevel   = 0
+  var prevOffset  = n
   for(var ptr=n-1; ptr>=0; --ptr) {
     points[2*ptr]   = (points[2*ptr]   - lox) * scaleX
     points[2*ptr+1] = (points[2*ptr+1] - loy) * scaleY
@@ -110,16 +123,15 @@ function snapPoints(points, ids, weights, bounds) {
 
     lod.push(new SnapInterval(
       diam * Math.pow(0.5, level),
-      ptr + 1,
-      prevOffset - ptr
+      ptr+1,
+      prevOffset - (ptr+1)
     ))
-    prevOffset = ptr
+    prevOffset = ptr+1
 
     lastLevel = level
   }
-  if(prevOffset) {
-    lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
-  }
+
+  lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
   pool.free(levels)
 
   return lod
