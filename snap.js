@@ -24,12 +24,17 @@ function snapPoints(points, ids, weights, bounds) {
     if(b[1] === b[3]) {
       b[3] += 1
     }
+
+    bounds[0] = b[0]
+    bounds[1] = b[1]
+    bounds[2] = b[2]
+    bounds[3] = b[3]
   }
 
-  var lox = bounds[0] = b[0]
-  var loy = bounds[1] = b[1]
-  var hix = bounds[2] = b[2]
-  var hiy = bounds[3] = b[3]
+  var lox = bounds[0]
+  var loy = bounds[1]
+  var hix = bounds[2]
+  var hiy = bounds[3]
 
   //Calculate diameter
   var scaleX = 1.0 / (hix - lox)
