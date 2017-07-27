@@ -1,7 +1,5 @@
 'use strict'
 
-var pool = require('typedarray-pool')
-
 var sortLevels = require('./lib/sort')
 
 module.exports = snapPoints
@@ -73,7 +71,7 @@ function snapPoints(points, ids, weights, bounds) {
   bounds[2] = hix
   bounds[3] = hiy
 
-  var levels = pool.mallocInt32(n)
+  var levels = new Int32Array(n)
   var ptr = 0
 
   function snapRec(x, y, diam, start, end, level) {
@@ -132,7 +130,6 @@ function snapPoints(points, ids, weights, bounds) {
   }
 
   lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
-  pool.free(levels)
 
   return lod
 }
