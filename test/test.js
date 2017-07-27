@@ -11,7 +11,7 @@ tape('snap-points-2d', function(t) {
     var npoints   = points.slice()
     var ids       = new Array(numPoints)
     var weights   = new Array(numPoints)
-    var bounds    = [0,0,0,0]
+    var bounds    = []
 
     var scales = snap(npoints, ids, weights, bounds)
 
