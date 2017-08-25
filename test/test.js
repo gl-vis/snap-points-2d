@@ -93,3 +93,32 @@ k_loop:
 
   t.end()
 })
+
+
+tape('no arguments', function (t) {
+  var levels = snap([0,0, 1,1, 2,2])
+
+  t.end()
+})
+
+tape('larger bounds', function (t) {
+  var pos = [0,0, 1,1, 2,2, 3,3, 4,4]
+
+  var levels = snap(pos.slice(), [], [], [0,0,4,4])
+  t.deepEqual(levels, [
+      {pixelSize: 2, offset: 4, count: 1},
+      {pixelSize: 1, offset: 2, count: 2},
+      {pixelSize: 0.5, offset: 0, count: 2}
+  ])
+
+  var levels2 = snap(pos.slice(), [], [], [0,0,40,40])
+  t.deepEqual(levels2, [
+    {pixelSize: 20, offset: 4, count: 1},
+    {pixelSize: 10, offset: 3, count: 1},
+    {pixelSize: 5, offset: 2, count: 1},
+    {pixelSize: 2.5, offset: 1, count: 1},
+    {pixelSize: 1.25, offset: 0, count: 1}
+  ])
+
+  t.end()
+})

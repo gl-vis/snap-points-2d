@@ -11,11 +11,16 @@ function snapPoints(points, ids, weights, bounds) {
     return []
   }
 
+  if (!ids) ids = Array(n)
+  if (!weights) weights = Array(n)
+  if (!bounds) bounds = []
+
   for(var i=0; i<n; ++i) {
     ids[i] = i
   }
 
-  if (!bounds || !bounds.length) {
+  // empty bounds or infinite bounds are considered as undefined bounds
+  if (!bounds.length || bounds[0] === -Infinity || bounds[1] === -Infinity || bounds[2] === Infinity || bounds[3] === Infinity) {
     var b = getBounds(points, 2)
 
     if(b[0] === b[2]) {
