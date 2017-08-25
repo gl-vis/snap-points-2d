@@ -20,7 +20,7 @@ function snapPoints(points, ids, weights, bounds) {
   }
 
   // empty bounds or invalid bounds are considered as undefined and require recalc
-  if (!bounds.length || bounds[0] >= bounds[1] || bounds[2] <= bounds[3]) {
+  if (!bounds.length || bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
     var b = getBounds(points, 2)
 
     if(b[0] === b[2]) {
