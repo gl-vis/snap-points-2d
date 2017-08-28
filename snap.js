@@ -1,8 +1,7 @@
 'use strict'
 
-var pool = require('typedarray-pool')
-
 var sortLevels = require('./lib/sort')
+var getBounds = require('array-bounds')
 
 module.exports = snapPoints
 
@@ -37,43 +36,49 @@ function SnapInterval(pixelSize, offset, count) {
 }
 
 function snapPoints(points, ids, weights, bounds) {
-  var n    = points.length >>> 1
+  var n = points.length >>> 1
   if(n < 1) {
     return []
   }
 
-  var lox =  Infinity, loy =  Infinity
-  var hix = -Infinity, hiy = -Infinity
+  if (!ids) ids = Array(n)
+  if (!weights) weights = Array(n)
+  if (!bounds) bounds = []
+
   for(var i=0; i<n; ++i) {
-    var x = points[2*i]
-    var y = points[2*i+1]
-    lox = Math.min(lox, x)
-    hix = Math.max(hix, x)
-    loy = Math.min(loy, y)
-    hiy = Math.max(hiy, y)
     ids[i] = i
   }
 
-  if(lox === hix) {
-    hix += 1 + Math.abs(hix)
+  // empty bounds or invalid bounds are considered as undefined and require recalc
+  if (!bounds.length || bounds.length < 4 || bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
+    var b = getBounds(points, 2)
+
+    if(b[0] === b[2]) {
+      b[2] += 1
+    }
+    if(b[1] === b[3]) {
+      b[3] += 1
+    }
+
+    bounds[0] = b[0]
+    bounds[1] = b[1]
+    bounds[2] = b[2]
+    bounds[3] = b[3]
   }
-  if(loy === hiy) {
-    hiy += 1 + Math.abs(hix)
-  }
+
+  var lox = bounds[0]
+  var loy = bounds[1]
+  var hix = bounds[2]
+  var hiy = bounds[3]
 
   //Calculate diameter
   var scaleX = 1.0 / (hix - lox)
   var scaleY = 1.0 / (hiy - loy)
   var diam = Math.max(hix - lox, hiy - loy)
 
-  bounds = bounds || [0,0,0,0]
 
-  bounds[0] = lox
-  bounds[1] = loy
-  bounds[2] = hix
-  bounds[3] = hiy
 
-  var levels = pool.mallocInt32(n)
+  var levels = new Int32Array(n)
   var ptr = 0
 
   function snapRec(x, y, diam, start, end, level) {
@@ -132,7 +137,6 @@ function snapPoints(points, ids, weights, bounds) {
   }
 
   lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
-  pool.free(levels)
 
   return lod
 }
