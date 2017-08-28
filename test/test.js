@@ -4,6 +4,7 @@ var tape = require('tape')
 var snap = require('../snap')
 var approxEqual = require('almost-equal')
 
+
 tape('snap-points-2d', function(t) {
 
   function verifySnap(points) {

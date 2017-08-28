@@ -5,6 +5,36 @@ var getBounds = require('array-bounds')
 
 module.exports = snapPoints
 
+function partition(points, ids, start, end, lox, loy, hix, hiy) {
+  var mid = start
+  for(var i=start; i<end; ++i) {
+    var x  = points[2*i]
+    var y  = points[2*i+1]
+    var s  = ids[i]
+    if(lox <= x && x <= hix &&
+       loy <= y && y <= hiy) {
+      if(i === mid) {
+        mid += 1
+      } else {
+        points[2*i]     = points[2*mid]
+        points[2*i+1]   = points[2*mid+1]
+        ids[i]          = ids[mid]
+        points[2*mid]   = x
+        points[2*mid+1] = y
+        ids[mid]        = s
+        mid += 1
+      }
+    }
+  }
+  return mid
+}
+
+function SnapInterval(pixelSize, offset, count) {
+  this.pixelSize  = pixelSize
+  this.offset     = offset
+  this.count      = count
+}
+
 function snapPoints(points, ids, weights, bounds) {
   var n = points.length >>> 1
   if(n < 1) {
@@ -20,7 +50,7 @@ function snapPoints(points, ids, weights, bounds) {
   }
 
   // empty bounds or invalid bounds are considered as undefined and require recalc
-  if (!bounds.length || bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
+  if (!bounds.length || bounds.length < 4 || bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
     var b = getBounds(points, 2)
 
     if(b[0] === b[2]) {
@@ -109,34 +139,4 @@ function snapPoints(points, ids, weights, bounds) {
   lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
 
   return lod
-}
-
-function partition(points, ids, start, end, lox, loy, hix, hiy) {
-  var mid = start
-  for(var i=start; i<end; ++i) {
-    var x  = points[2*i]
-    var y  = points[2*i+1]
-    var s  = ids[i]
-    if(lox <= x && x <= hix &&
-       loy <= y && y <= hiy) {
-      if(i === mid) {
-        mid += 1
-      } else {
-        points[2*i]     = points[2*mid]
-        points[2*i+1]   = points[2*mid+1]
-        ids[i]          = ids[mid]
-        points[2*mid]   = x
-        points[2*mid+1] = y
-        ids[mid]        = s
-        mid += 1
-      }
-    }
-  }
-  return mid
-}
-
-function SnapInterval(pixelSize, offset, count) {
-  this.pixelSize  = pixelSize
-  this.offset     = offset
-  this.count      = count
 }
