@@ -1,5 +1,5 @@
-snap-points-2d
-==============
+# snap-points-2d
+
 Runs iterative snap rounding on a set of 2D coordinates to produce a hierarchical level of detail for optimizing online rendering of huge 2D plots.
 
 # Install

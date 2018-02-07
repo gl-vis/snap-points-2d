@@ -11,8 +11,8 @@ function snapPoints(points, ids, weights, bounds) {
     return []
   }
 
-  if (!ids) ids = Array(n)
-  if (!weights) weights = Array(n)
+  if (!ids) ids = new Uint32Array(n)
+  if (!weights) weights = new Uint32Array(n)
   if (!bounds) bounds = []
 
   for(var i=0; i<n; ++i) {
@@ -48,7 +48,7 @@ function snapPoints(points, ids, weights, bounds) {
 
 
 
-  var levels = new Int32Array(n)
+  var levels = new Uint8Array(n)
   var ptr = 0
 
   function snapRec(x, y, diam, start, end, level) {

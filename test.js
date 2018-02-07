@@ -122,6 +122,15 @@ t('larger bounds', t => {
   t.end()
 })
 
-t('performance', t => {
+t.only('performance', t => {
+  let N = 1e6
+  let points = new Float64Array(N)
+
+  for (let i = 0; i < N; i++) {
+    points[i] = Math.random()
+  }
+
+  snap(points)
+
   t.end()
 })
