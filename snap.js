@@ -71,11 +71,6 @@ function snapPoints(points, bounds) {
         if(nextOffset === offset) {
           continue
         }
-        if(nextOffset - offset >= Math.max(0.9 * count, 32)) {
-          var mid = (end + start)>>>1
-          snapRec(nx, ny, diam_2, offset, mid, level+1)
-          offset = mid
-        }
         snapRec(nx, ny, diam_2, offset, nextOffset, level+1)
         offset = nextOffset
       }
