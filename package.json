@@ -4,7 +4,7 @@
   "description": "snap round 2d points",
   "main": "snap.js",
   "scripts": {
-    "test": "tape test/*.js"
+    "test": "tape test.js"
   },
   "repository": {
     "type": "git",

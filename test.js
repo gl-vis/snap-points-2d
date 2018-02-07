@@ -1,12 +1,11 @@
 'use strict'
 
-var tape = require('tape')
-var snap = require('../snap')
+var t = require('tape')
+var snap = require('./snap')
 var approxEqual = require('almost-equal')
 
 
-tape('snap-points-2d', function(t) {
-
+t('snap-points-2d', t => {
   function verifySnap(points) {
     var numPoints = points.length>>>1
     var npoints   = points.slice()
@@ -44,8 +43,7 @@ tape('snap-points-2d', function(t) {
         t.equals(offs+count, scales[i-1].offset, 'offset for ' + i)
         t.ok(r < scales[i-1].pixelSize, 'test scales ok')
       }
-
-k_loop:
+  k_loop:
       for(var k=offs-1; k>=0; --k) {
         var ax = npoints[2*k]
         var ay = npoints[2*k+1]
@@ -96,13 +94,13 @@ k_loop:
 })
 
 
-tape('no arguments', function (t) {
+t('no arguments', t => {
   var levels = snap([0,0, 1,1, 2,2])
 
   t.end()
 })
 
-tape('larger bounds', function (t) {
+t('larger bounds', t => {
   var pos = [0,0, 1,1, 2,2, 3,3, 4,4]
 
   var levels = snap(pos.slice(), [], [], [0,0,4,4])
@@ -121,5 +119,9 @@ tape('larger bounds', function (t) {
     {pixelSize: 1.25, offset: 0, count: 1}
   ])
 
+  t.end()
+})
+
+t('performance', t => {
   t.end()
 })
