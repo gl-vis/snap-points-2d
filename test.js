@@ -9,11 +9,9 @@ t('snap-points-2d', t => {
   function verifySnap(points) {
     var numPoints = points.length>>>1
     var npoints   = points.slice()
-    var ids       = new Array(numPoints)
-    var weights   = new Array(numPoints)
     var bounds    = []
 
-    var scales = snap(npoints, ids, weights, bounds)
+    var {levels, ids, weights} = snap(npoints, bounds)
 
     var sx = bounds[0]
     var sy = bounds[1]
@@ -27,11 +25,11 @@ t('snap-points-2d', t => {
       t.ok(approxEqual(sy + sh*npoints[2*i+1], points[2*id+1], approxEqual.FLT_EPSILON), 'id perm ok: ' + id + ' ' +  points[2*id+1] + ' = ' + (sy + sh*npoints[2*i+1]))
     }
 
-    t.equals(scales[scales.length-1].offset, 0, 'last item')
-    t.equals(scales[0].offset+scales[0].count, numPoints, 'first item')
+    t.equals(levels[levels.length-1].offset, 0, 'last item')
+    t.equals(levels[0].offset+levels[0].count, numPoints, 'first item')
 
-    for(var i=0; i<scales.length; ++i) {
-      var s = scales[i]
+    for(var i=0; i<levels.length; ++i) {
+      var s = levels[i]
 
       var r = s.pixelSize
       var offs  = s.offset
@@ -40,8 +38,8 @@ t('snap-points-2d', t => {
       console.log('level=', i, r, offs, count)
 
       if(i > 0) {
-        t.equals(offs+count, scales[i-1].offset, 'offset for ' + i)
-        t.ok(r < scales[i-1].pixelSize, 'test scales ok')
+        t.equals(offs+count, levels[i-1].offset, 'offset for ' + i)
+        t.ok(r < levels[i-1].pixelSize, 'test scales ok')
       }
   k_loop:
       for(var k=offs-1; k>=0; --k) {
@@ -61,8 +59,6 @@ t('snap-points-2d', t => {
       }
     }
   }
-
-  t.same(snap([], [], []), [])
 
   verifySnap([
      1, 1,
@@ -103,15 +99,16 @@ t('no arguments', t => {
 t('larger bounds', t => {
   var pos = [0,0, 1,1, 2,2, 3,3, 4,4]
 
-  var levels = snap(pos.slice(), [], [], [0,0,4,4])
+  var {levels} = snap(pos.slice(), [0,0,4,4])
   t.deepEqual(levels, [
       {pixelSize: 2, offset: 4, count: 1},
       {pixelSize: 1, offset: 2, count: 2},
       {pixelSize: 0.5, offset: 0, count: 2}
   ])
 
-  var levels2 = snap(pos.slice(), [], [], [0,0,40,40])
-  t.deepEqual(levels2, [
+  var {levels} = snap(pos.slice(), [0,0,40,40])
+
+  t.deepEqual(levels, [
     {pixelSize: 20, offset: 4, count: 1},
     {pixelSize: 10, offset: 3, count: 1},
     {pixelSize: 5, offset: 2, count: 1},
@@ -122,7 +119,7 @@ t('larger bounds', t => {
   t.end()
 })
 
-t.only('performance', t => {
+t('performance', t => {
   let N = 1e6
   let points = new Float64Array(N)
 
@@ -130,7 +127,9 @@ t.only('performance', t => {
     points[i] = Math.random()
   }
 
-  snap(points)
+  console.time(1)
+    snap(points)
+  console.timeEnd(1)
 
   t.end()
 })

@@ -5,15 +5,16 @@ var getBounds = require('array-bounds')
 
 module.exports = snapPoints
 
-function snapPoints(points, ids, weights, bounds) {
+function snapPoints(points, bounds) {
   var n = points.length >>> 1
   if(n < 1) {
-    return []
+    return {levels: [], ids: null, weights: null}
   }
 
-  if (!ids) ids = new Uint32Array(n)
-  if (!weights) weights = new Uint32Array(n)
   if (!bounds) bounds = []
+
+  let ids = new Uint32Array(n)
+  let weights = new Uint32Array(n)
 
   for(var i=0; i<n; ++i) {
     ids[i] = i
@@ -45,7 +46,6 @@ function snapPoints(points, ids, weights, bounds) {
   var scaleX = 1.0 / (hix - lox)
   var scaleY = 1.0 / (hiy - loy)
   var diam = Math.max(hix - lox, hiy - loy)
-
 
 
   var levels = new Uint8Array(n)
@@ -97,19 +97,27 @@ function snapPoints(points, ids, weights, bounds) {
       continue
     }
 
-    lod.push(new SnapInterval(
-      diam * Math.pow(0.5, level),
-      ptr+1,
-      prevOffset - (ptr+1)
-    ))
+    lod.push({
+      pixelSize: diam * Math.pow(0.5, level),
+      offset: ptr+1,
+      count: prevOffset - (ptr+1)
+    })
     prevOffset = ptr+1
 
     lastLevel = level
   }
 
-  lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
+  lod.push({
+    pixelSize: diam * Math.pow(0.5, level+1),
+    offset: 0,
+    count: prevOffset
+  })
 
-  return lod
+  return {
+    levels: lod,
+    ids: ids,
+    weights: weights
+  }
 }
 
 function partition(points, ids, start, end, lox, loy, hix, hiy) {
@@ -134,10 +142,4 @@ function partition(points, ids, start, end, lox, loy, hix, hiy) {
     }
   }
   return mid
-}
-
-function SnapInterval(pixelSize, offset, count) {
-  this.pixelSize  = pixelSize
-  this.offset     = offset
-  this.count      = count
 }
