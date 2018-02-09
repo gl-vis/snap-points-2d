@@ -5,7 +5,7 @@ var snap = require('./snap')
 var approxEqual = require('almost-equal')
 
 
-t.only('snap-points-2d', t => {
+t('snap-points-2d', t => {
   function verifySnap(points) {
     var numPoints = points.length>>>1
     var npoints   = points.slice()

@@ -1,6 +1,5 @@
 'use strict'
 
-var sortLevels = require('./lib/sort')
 var getBounds = require('array-bounds')
 
 module.exports = snapPoints
