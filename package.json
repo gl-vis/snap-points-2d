@@ -26,10 +26,11 @@
   },
   "homepage": "https://github.com/mikolalysenko/snap-points-2d#readme",
   "devDependencies": {
-    "typedarray-pool": "^1.1.0",
     "almost-equal": "^1.0.0",
     "gauss-random": "^1.0.1",
-    "tape": "^4.2.0"
+    "math-float64-bits": "^1.0.1",
+    "tape": "^4.2.0",
+    "typedarray-pool": "^1.1.0"
   },
   "dependencies": {
     "array-bounds": "^1.0.1"

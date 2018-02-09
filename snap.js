@@ -13,8 +13,9 @@ function snapPoints(points, bounds) {
 
   if (!bounds) bounds = []
 
-  let ids = new Uint32Array(n)
-  let weights = new Uint32Array(n)
+  var ids = new Uint32Array(n)
+  var weights = new Uint32Array(n)
+  var levels = new Uint8Array(n)
 
   for(var i=0; i<n; ++i) {
     ids[i] = i
@@ -48,7 +49,6 @@ function snapPoints(points, bounds) {
   var diam = Math.max(hix - lox, hiy - loy)
 
 
-  var levels = new Uint8Array(n)
   var ptr = 0
 
   function snapRec(x, y, diam, start, end, level) {
@@ -78,15 +78,50 @@ function snapPoints(points, bounds) {
   }
   snapRec(lox, loy, diam, 0, n, 0)
 
-  sortLevels(levels, points, ids, weights, n)
+  // normalize values
+  for (var i = 0; i < n; i++) {
+    points[2*i]   = (points[2*i]   - lox) * scaleX
+    points[2*i+1] = (points[2*i+1] - loy) * scaleY
+  }
+
+  // pack levels: uint8, x-coord: uint16 and id: uint32 to float64
+
+  var packed = new Float64Array(n)
+  var packedInt = new Uint32Array(packed.buffer)
+
+  for (var i = 0; i < n; i++) {
+    packedInt[i * 2] = i
+    packedInt[i * 2 + 1] = (0x3ff00000 & (levels[i] << 20) | 0x0000ffff & ((1 - points[i * 2]) * 0xffff))
+  }
+
+  // do native sort
+  packed.sort()
+
+  // unpack data back
+  var sortedLevels = new Uint8Array(n)
+  var sortedWeights = new Uint32Array(n)
+  var sortedIds = new Uint32Array(n)
+  var sortedPoints = new Float64Array(n * 2)
+  for (var i = 0; i < n; i++) {
+    var id = packedInt[(n - i - 1) * 2]
+    sortedLevels[i] = levels[id]
+    sortedWeights[i] = weights[id]
+    sortedIds[i] = ids[id]
+    sortedPoints[i * 2] = points[id * 2]
+    sortedPoints[i * 2 + 1] = points[id * 2 + 1]
+  }
+  levels = sortedLevels
+  points = sortedPoints
+  ids = sortedIds
+  weights = sortedWeights
+
+  // sortLevels(levels, points, ids, weights, n)
+
 
   var lod         = []
   var lastLevel   = 0
   var prevOffset  = n
   for(var ptr=n-1; ptr>=0; --ptr) {
-    points[2*ptr]   = (points[2*ptr]   - lox) * scaleX
-    points[2*ptr+1] = (points[2*ptr+1] - loy) * scaleY
-
     var level = levels[ptr]
     if(level === lastLevel) {
       continue
@@ -109,6 +144,7 @@ function snapPoints(points, bounds) {
   })
 
   return {
+    points: points,
     levels: lod,
     ids: ids,
     weights: weights

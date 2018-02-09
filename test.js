@@ -5,7 +5,7 @@ var snap = require('./snap')
 var approxEqual = require('almost-equal')
 
 
-t('snap-points-2d', t => {
+t.only('snap-points-2d', t => {
   function verifySnap(points) {
     var numPoints = points.length>>>1
     var npoints   = points.slice()
@@ -119,7 +119,20 @@ t('larger bounds', t => {
   t.end()
 })
 
-t('performance', t => {
+t('basics', t => {
+  let {levels, points, ids, weights} = snap([0,0,1,1,2,2,3,3,4,4])
+
+  t.deepEqual(points, [0.5, 0.5, 1, 1, 0.25, 0.25, 0.75, 0.75, 0, 0])
+  t.deepEqual(ids, [2, 4, 1, 3, 0])
+  t.deepEqual(weights, [1, 1, 2, 2, 5])
+  t.deepEqual(levels, [
+    {pixelSize: 2, offset: 4, count: 1},
+    {pixelSize: 1, offset: 2, count: 2},
+    {pixelSize: 0.5, offset: 0, count: 2}
+  ])
+})
+
+t.skip('performance', t => {
   let N = 1e6
   let points = new Float64Array(N)
 
