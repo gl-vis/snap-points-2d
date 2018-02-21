@@ -11,7 +11,7 @@ function snapPoints(srcPoints, bounds) {
     return {levels: [], ids: null, weights: null, points: srcPoints}
   }
 
-  var points = new Float64Array(srcPoints)
+  var points = new Float64Array(n * 2)
 
   if (!bounds) bounds = []
 
@@ -19,13 +19,13 @@ function snapPoints(srcPoints, bounds) {
   var weights = new Uint32Array(n)
   var levels = new Uint8Array(n)
 
-  for(var i=0; i<n; ++i) {
+  for(var i=0; i < n; ++i) {
     ids[i] = i
   }
 
   // empty bounds or invalid bounds are considered as undefined and require recalc
   if (!bounds.length || bounds.length < 4 || bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
-    var b = getBounds(points, 2)
+    var b = getBounds(srcPoints, 2)
 
     if(b[0] === b[2]) {
       b[2] += 1
@@ -50,10 +50,15 @@ function snapPoints(srcPoints, bounds) {
   var scaleY = 1.0 / (hiy - loy)
   var diam = Math.max(hix - lox, hiy - loy)
 
+  // normalize values
+  for (var i = 0; i < n; i++) {
+    points[2*i]   = (srcPoints[2*i]   - lox) * scaleX
+    points[2*i+1] = (srcPoints[2*i+1] - loy) * scaleY
+  }
 
   // Rearrange in quadtree order
   var ptr = 0
-  snapRec(lox, loy, diam, 0, n, 0)
+  snapRec(0, 0, 1, 0, n, 0)
 
   function snapRec(x, y, diam, start, end, level) {
     var diam_2 = diam * 0.5
@@ -83,7 +88,7 @@ function snapPoints(srcPoints, bounds) {
 
   function partition(points, ids, start, end, lox, loy, hix, hiy) {
     var mid = start
-    for(var i=start; i<end; ++i) {
+    for(var i=start; i < end; ++i) {
       var x  = points[2*i]
       var y  = points[2*i+1]
       var s  = ids[i]
@@ -103,12 +108,6 @@ function snapPoints(srcPoints, bounds) {
       }
     }
     return mid
-  }
-
-  // normalize values
-  for (var i = 0; i < n; i++) {
-    points[2*i]   = (points[2*i]   - lox) * scaleX
-    points[2*i+1] = (points[2*i+1] - loy) * scaleY
   }
 
   // sort by levels with accordance to x-coordinate

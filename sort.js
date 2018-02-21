@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = window.Float64Array ? nativeSort : sortLevels
+module.exports = global.Float64Array ? nativeSort : sortLevels
 
 
 function nativeSort(levels, points, ids, weights, n) {

@@ -18,7 +18,7 @@ t('snap-points-2d', t => {
     var sw = bounds[2] - bounds[0]
     var sh = bounds[3] - bounds[1]
 
-    for(var i=0; i<numPoints; ++i) {
+    for(var i=0; i < numPoints; ++i) {
       var id = ids[i]
       t.ok(approxEqual(sx + sw*npoints[2*i],   srcPoints[2*id], approxEqual.FLT_EPSILON),
         'id perm ok: ' + id + ' ' +  srcPoints[2*id] + ' = ' + (sx + sw*npoints[2*i]))
@@ -28,7 +28,7 @@ t('snap-points-2d', t => {
     t.equals(levels[levels.length-1].offset, 0, 'last item')
     t.equals(levels[0].offset+levels[0].count, numPoints, 'first item')
 
-    for(var i=0; i<levels.length; ++i) {
+    for(var i=0; i < levels.length; ++i) {
       var s = levels[i]
 
       var r = s.pixelSize
@@ -48,7 +48,7 @@ t('snap-points-2d', t => {
 
         var mind = Infinity
 
-        for(var j=offs; j<offs+count; ++j) {
+        for(var j=offs; j < offs+count; ++j) {
           var x = npoints[2*j]
           var y = npoints[2*j+1]
 
@@ -65,13 +65,15 @@ t('snap-points-2d', t => {
      2, 2,
      3, 3,
      4, 4,
-     5, 5])
+     5, 5
+  ])
 
   verifySnap([
     0,0,
     0,0,
     0,0,
-    0,0])
+    0,0
+  ])
 
   verifySnap([
     1, 2,
@@ -81,7 +83,7 @@ t('snap-points-2d', t => {
   ])
 
   var pts = new Array(100)
-  for(var i=0; i<100; ++i) {
+  for(var i=0; i < 100; ++i) {
     pts[i] = Math.random()
   }
   verifySnap(pts)
