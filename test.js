@@ -138,7 +138,7 @@ t('larger bounds', t => {
 })
 
 
-t('performance', t => {
+t.only('performance', t => {
   let N = 1e6
   let points = new Float64Array(N)
 
