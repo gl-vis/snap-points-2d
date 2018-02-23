@@ -58,9 +58,12 @@ function snapPoints(srcPoints, bounds) {
 
   // Rearrange in quadtree order
   let ptr = 0
+
+  let a = new Uint32Array(n), b = new Uint32Array(n), c = new Uint32Array(n), d = new Uint32Array(n)
+
   snapRec(0, 0, 1, 0, n, 0)
 
-  function snapRec(x, y, diam, start, end, level) {
+  function snapRec(lx, ly, diam, start, end, level) {
     let diam_2 = diam * 0.5
     let offset = start + 1
     let count = end - start
@@ -87,44 +90,44 @@ function snapPoints(srcPoints, bounds) {
     //     offset = mid
     //   }
     // }
+    let aoff = 0, boff = 0, coff = 0, doff = 0
 
-    let a = [], b = [], c = [], d = []
+    let cx = lx + diam_2, cy = ly + diam_2
 
-    let cx = x + diam_2, cy = y + diam_2
     for (let i = offset; i < end; i++) {
       let id = ids[i]
       let x  = points[2*id]
       let y  = points[2*id+1]
 
-      if (x > cx) {
-        if (y < cy) a.push(id)
-        else b.push(id)
+      if (x < cx) {
+        if (y < cy) a[aoff++] = id
+        else b[boff++] = id
       }
       else {
-        if (y < cy) c.push(id)
-        else d.push(id)
+        if (y < cy) c[coff++] = id
+        else d[doff++] = id
       }
     }
 
-    let a0 = offset, a1 = offset + a.length,
-        b0 = a1, b1 = b0 + b.length,
-        c0 = b1, c1 = c0 + c.length,
-        d0 = c1, d1 = d0 + d.length
+    let a0 = offset, a1 = offset + aoff,
+        b0 = a1, b1 = b0 + boff,
+        c0 = b1, c1 = c0 + coff,
+        d0 = c1, d1 = d0 + doff
 
     if (a1 > a0) {
-      ids.set(a, a0)
-      snapRec(x, y, diam_2, a0, a1, level + 1)
+      ids.set(a.subarray(0, aoff), a0)
+      snapRec(lx, ly, diam_2, a0, a1, level + 1)
     }
     if (b1 > b0) {
-      ids.set(b, b0)
-      snapRec(x, cy, diam_2, b0, b1, level + 1)
+      ids.set(b.subarray(0, boff), b0)
+      snapRec(lx, cy, diam_2, b0, b1, level + 1)
     }
     if (c1 > c0) {
-      ids.set(c, c0)
-      snapRec(cx, y, diam_2, c0, c1, level + 1)
+      ids.set(c.subarray(0, coff), c0)
+      snapRec(cx, ly, diam_2, c0, c1, level + 1)
     }
     if (d1 > d0) {
-      ids.set(d, d0)
+      ids.set(d.subarray(0, doff), d0)
       snapRec(cx, cy, diam_2, d0, d1, level + 1)
     }
   }
