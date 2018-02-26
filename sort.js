@@ -1,6 +1,67 @@
 'use strict'
 
-module.exports = global.Float64Array ? nativeSort : sortLevels
+module.exports = bucketSort//global.Float64Array ? nativeSort : sortLevels
+
+
+function bucketSort(levels, points, ids, weights, n) {
+  // measure bucket lengths
+  let lengths = []
+
+  for (let i = 0; i < n; i++) {
+    let level = levels[i]
+    if (lengths[level] == null) lengths[level] = 1
+    else lengths[level]++
+  }
+
+  // create buckets
+  let maxLevel = lengths.length - 1
+  let buckets = []
+  for (let level = 0; level <= maxLevel; level++) {
+    buckets[level] = new Uint32Array(lengths[level] * 2)
+  }
+
+  // pack buckets for native sort: id and x-coord
+  let counts = lengths.map(l => 0)
+  for (let i = 0; i < n; i++) {
+    let level = levels[i]
+    let count = counts[level]++
+    let packedInt = buckets[level]
+    packedInt[count * 2] = i
+    packedInt[count * 2 + 1] = (0x0000ffff & ((1 - points[i * 2]) * 0xffff))
+  }
+
+  // sort each buffer separately and form output
+  var sortedLevels = new Uint8Array(n)
+  var sortedWeights = new Uint32Array(n)
+  var sortedIds = new Uint32Array(n)
+  var sortedPoints = new Float64Array(n * 2)
+
+  let ptr = 0
+  for (let level = 0; level <= maxLevel; level++) {
+    let packedInt = buckets[level]
+    let packed = new Float64Array(packedInt.buffer)
+    packed.sort()
+
+    // unpack data back
+    for (let i = 0, l = packed.length; i < l; i++, ptr++) {
+      let id = packedInt[(l - i - 1) * 2]
+      sortedLevels[ptr] = levels[id]
+      sortedWeights[ptr] = weights[id]
+      sortedIds[ptr] = ids[id]
+      sortedPoints[ptr * 2] = points[id * 2]
+      sortedPoints[ptr * 2 + 1] = points[id * 2 + 1]
+    }
+  }
+
+
+  return {
+    levels: sortedLevels,
+    points: sortedPoints,
+    ids: sortedIds,
+    weights: sortedWeights
+  }
+}
+
 
 
 function nativeSort(levels, points, ids, weights, n) {
