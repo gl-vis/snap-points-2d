@@ -1,6 +1,43 @@
 'use strict'
 
-module.exports = sortLevels
+module.exports = global.Float64Array ? nativeSort : sortLevels
+
+
+function nativeSort(levels, points, ids, weights, n) {
+  // pack levels: uint8, x-coord: uint16 and id: uint32 to float64
+  var packed = new Float64Array(n)
+  var packedInt = new Uint32Array(packed.buffer)
+
+  for (var i = 0; i < n; i++) {
+    packedInt[i * 2] = i
+    packedInt[i * 2 + 1] = (0x3ff00000 & (levels[i] << 20) | 0x0000ffff & ((1 - points[i * 2]) * 0xffff))
+  }
+
+  // do native sort
+  packed.sort()
+
+  // unpack data back
+  var sortedLevels = new Uint8Array(n)
+  var sortedWeights = new Uint32Array(n)
+  var sortedIds = new Uint32Array(n)
+  var sortedPoints = new Float64Array(n * 2)
+  for (var i = 0; i < n; i++) {
+    var id = packedInt[(n - i - 1) * 2]
+    sortedLevels[i] = levels[id]
+    sortedWeights[i] = weights[id]
+    sortedIds[i] = ids[id]
+    sortedPoints[i * 2] = points[id * 2]
+    sortedPoints[i * 2 + 1] = points[id * 2 + 1]
+  }
+
+  return {
+    levels: sortedLevels,
+    points: sortedPoints,
+    ids: sortedIds,
+    weights: sortedWeights
+  }
+}
+
 
 var INSERT_SORT_CUTOFF = 32
 
@@ -9,6 +46,13 @@ function sortLevels(data_levels, data_points, data_ids, data_weights, n0) {
     insertionSort(0, n0 - 1, data_levels, data_points, data_ids, data_weights)
   } else {
     quickSort(0, n0 - 1, data_levels, data_points, data_ids, data_weights)
+  }
+
+  return {
+    levels: data_levels,
+    points: data_points,
+    ids: data_ids,
+    weights: data_weights
   }
 }
 

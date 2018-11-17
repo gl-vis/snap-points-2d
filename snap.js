@@ -1,57 +1,31 @@
 'use strict'
 
-var sortLevels = require('./lib/sort')
 var getBounds = require('array-bounds')
+var sort = require('./sort')
 
 module.exports = snapPoints
 
-function partition(points, ids, start, end, lox, loy, hix, hiy) {
-  var mid = start
-  for(var i=start; i<end; ++i) {
-    var x  = points[2*i]
-    var y  = points[2*i+1]
-    var s  = ids[i]
-    if(lox <= x && x <= hix &&
-       loy <= y && y <= hiy) {
-      if(i === mid) {
-        mid += 1
-      } else {
-        points[2*i]     = points[2*mid]
-        points[2*i+1]   = points[2*mid+1]
-        ids[i]          = ids[mid]
-        points[2*mid]   = x
-        points[2*mid+1] = y
-        ids[mid]        = s
-        mid += 1
-      }
-    }
-  }
-  return mid
-}
-
-function SnapInterval(pixelSize, offset, count) {
-  this.pixelSize  = pixelSize
-  this.offset     = offset
-  this.count      = count
-}
-
-function snapPoints(points, ids, weights, bounds) {
-  var n = points.length >>> 1
+function snapPoints(srcPoints, bounds) {
+  var n = srcPoints.length >>> 1
   if(n < 1) {
-    return []
+    return {levels: [], ids: null, weights: null, points: srcPoints}
   }
 
-  if (!ids) ids = Array(n)
-  if (!weights) weights = Array(n)
+  var points = new Float64Array(n * 2)
+
   if (!bounds) bounds = []
 
-  for(var i=0; i<n; ++i) {
+  var ids = new Uint32Array(n)
+  var weights = new Uint32Array(n)
+  var levels = new Uint8Array(n)
+
+  for(var i=0; i < n; ++i) {
     ids[i] = i
   }
 
   // empty bounds or invalid bounds are considered as undefined and require recalc
   if (!bounds.length || bounds.length < 4 || bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
-    var b = getBounds(points, 2)
+    var b = getBounds(srcPoints, 2)
 
     if(b[0] === b[2]) {
       b[2] += 1
@@ -71,15 +45,20 @@ function snapPoints(points, ids, weights, bounds) {
   var hix = bounds[2]
   var hiy = bounds[3]
 
-  //Calculate diameter
+  // Calculate diameter
   var scaleX = 1.0 / (hix - lox)
   var scaleY = 1.0 / (hiy - loy)
   var diam = Math.max(hix - lox, hiy - loy)
 
+  // normalize values
+  for (var i = 0; i < n; i++) {
+    points[2*i]   = (srcPoints[2*i]   - lox) * scaleX
+    points[2*i+1] = (srcPoints[2*i+1] - loy) * scaleY
+  }
 
-
-  var levels = new Int32Array(n)
+  // Rearrange in quadtree order
   var ptr = 0
+  snapRec(0, 0, 1, 0, n, 0)
 
   function snapRec(x, y, diam, start, end, level) {
     var diam_2 = diam * 0.5
@@ -101,42 +80,66 @@ function snapPoints(points, ids, weights, bounds) {
         if(nextOffset === offset) {
           continue
         }
-        if(nextOffset - offset >= Math.max(0.9 * count, 32)) {
-          var mid = (end + start)>>>1
-          snapRec(nx, ny, diam_2, offset, mid, level+1)
-          offset = mid
-        }
         snapRec(nx, ny, diam_2, offset, nextOffset, level+1)
         offset = nextOffset
       }
     }
   }
-  snapRec(lox, loy, diam, 0, n, 0)
-  sortLevels(levels, points, ids, weights, n)
 
+  function partition(points, ids, start, end, lox, loy, hix, hiy) {
+    var mid = start
+    for(var i=start; i < end; ++i) {
+      var x  = points[2*i]
+      var y  = points[2*i+1]
+      var s  = ids[i]
+      if(lox <= x && x <= hix &&
+         loy <= y && y <= hiy) {
+        if(i === mid) {
+          mid += 1
+        } else {
+          points[2*i]     = points[2*mid]
+          points[2*i+1]   = points[2*mid+1]
+          ids[i]          = ids[mid]
+          points[2*mid]   = x
+          points[2*mid+1] = y
+          ids[mid]        = s
+          mid += 1
+        }
+      }
+    }
+    return mid
+  }
+
+  // sort by levels with accordance to x-coordinate
+  var result = sort(levels, points, ids, weights, n)
+
+  // form levels of details
   var lod         = []
   var lastLevel   = 0
   var prevOffset  = n
   for(var ptr=n-1; ptr>=0; --ptr) {
-    points[2*ptr]   = (points[2*ptr]   - lox) * scaleX
-    points[2*ptr+1] = (points[2*ptr+1] - loy) * scaleY
-
-    var level = levels[ptr]
+    var level = result.levels[ptr]
     if(level === lastLevel) {
       continue
     }
 
-    lod.push(new SnapInterval(
-      diam * Math.pow(0.5, level),
-      ptr+1,
-      prevOffset - (ptr+1)
-    ))
+    lod.push({
+      pixelSize: diam * Math.pow(0.5, level),
+      offset: ptr+1,
+      count: prevOffset - (ptr+1)
+    })
     prevOffset = ptr+1
 
     lastLevel = level
   }
 
-  lod.push(new SnapInterval(diam * Math.pow(0.5, level+1), 0, prevOffset))
+  lod.push({
+    pixelSize: diam * Math.pow(0.5, level+1),
+    offset: 0,
+    count: prevOffset
+  })
 
-  return lod
+  result.levels = lod
+
+  return result
 }
